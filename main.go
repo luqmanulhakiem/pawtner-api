@@ -1,1 +1,5 @@
-//  IMPLEMENT MAIN GOLANG
+package main
+
+func main() {
+	//
+}
