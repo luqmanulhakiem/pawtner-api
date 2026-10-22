@@ -17,8 +17,39 @@ type RegisterInput struct {
 	Gender   string `json:"gender" binding:"required"`
 }
 
+type LoginInput struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
 func Login(c *gin.Context) {
-	//
+	var input LoginInput
+	var user models.User
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := config.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Wrong Email or Password"})
+		return
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Wrong Email or Password"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login Succesfully",
+		"data": gin.H{
+			"name":   user.FullName,
+			"email":  user.Email,
+			"gender": user.Gender,
+		},
+	})
 }
 
 func Register(c *gin.Context) {
