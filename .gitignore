@@ -1,0 +1,31 @@
+# Binary build / Hasil kompilasi
+/my-go-api
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with 'go test -c'
+*.test
+
+# Output profil (jika melakukan profiling)
+*.out
+
+# Dependency vendor (jika Anda menggunakan vendor folder)
+/vendor/
+
+# Environment variables / Config lokal
+.env
+config.json
+
+# Database lokal (jika sewaktu-waktu pakai SQLite atau file db lokal)
+*.db
+*.db-journal
+
+# IDE / Editor configuration
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
