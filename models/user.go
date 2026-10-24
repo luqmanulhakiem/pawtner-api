@@ -8,7 +8,6 @@ import (
 
 type User struct {
 	gorm.Model
-	// ID        uint      `json:"id" gorm:"primaryKey"`
 	FullName  string    `json:"full_name" gorm:"not null"`
 	Email     string    `json:"email" gorm:"unique"`
 	Password  string    `json:"password" gorm:"not null"`
