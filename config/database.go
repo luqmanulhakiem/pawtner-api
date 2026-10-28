@@ -19,7 +19,7 @@ func ConnectDatabase() {
 		log.Fatal("Gagal terhubung ke database:", err)
 	}
 
-	if err := database.AutoMigrate(&models.User{}, &models.DailyMood{}, &models.Partner{}, &models.Period{}); err != nil {
+	if err := database.AutoMigrate(&models.User{}, &models.DailyMood{}, &models.Partner{}, &models.Period{}, &models.Conflict{}, &models.ConflictNote{}); err != nil {
 		log.Fatal("Gagal migrasi database:", err)
 	}
 

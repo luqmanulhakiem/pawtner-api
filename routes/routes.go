@@ -37,6 +37,16 @@ func SetupRouter() *gin.Engine {
 				periods.PUT("/:id", controllers.UpdatePeriod)
 			}
 
+			conflicts := api.Group("/conflicts")
+			{
+				conflicts.POST("", controllers.CreateConflict)
+				conflicts.GET("", controllers.GetConflicts)
+				conflicts.GET("/:id", controllers.GetConflict)
+				conflicts.PUT("/:id", controllers.UpdateConflict)
+				conflicts.PUT("/:id/resolve", controllers.ResolveConflict)
+				conflicts.POST("/:id/notes", controllers.AddConflictNote)
+			}
+
 			partners := api.Group("/partners")
 			{
 				partners.GET("/search", controllers.SearchPartner)
