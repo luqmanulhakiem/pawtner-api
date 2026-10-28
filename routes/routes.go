@@ -47,6 +47,16 @@ func SetupRouter() *gin.Engine {
 				conflicts.POST("/:id/notes", controllers.AddConflictNote)
 			}
 
+			rules := api.Group("/rules")
+			{
+				rules.POST("", controllers.CreatePartnerRule)
+				rules.GET("", controllers.GetPartnerRules)
+				rules.GET("/:id", controllers.GetPartnerRule)
+				rules.PUT("/:id", controllers.UpdatePartnerRule)
+				rules.PUT("/:id/status", controllers.SetPartnerRuleStatus)
+				rules.DELETE("/:id", controllers.DeletePartnerRule)
+			}
+
 			partners := api.Group("/partners")
 			{
 				partners.GET("/search", controllers.SearchPartner)
