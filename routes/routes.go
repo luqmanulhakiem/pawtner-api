@@ -28,6 +28,15 @@ func SetupRouter() *gin.Engine {
 				moods.PUT("/:id", controllers.UpdateDailyMood)
 			}
 
+			periods := api.Group("/periods")
+			{
+				periods.POST("", controllers.CreatePeriod)
+				periods.GET("", controllers.GetPeriods)
+				periods.GET("/insight", controllers.GetPeriodInsight)
+				periods.GET("/:id", controllers.GetPeriod)
+				periods.PUT("/:id", controllers.UpdatePeriod)
+			}
+
 			partners := api.Group("/partners")
 			{
 				partners.GET("/search", controllers.SearchPartner)
@@ -36,6 +45,8 @@ func SetupRouter() *gin.Engine {
 				partners.GET("/sent", controllers.GetSentPartnerRequests)
 				partners.GET("/active", controllers.GetActivePartner)
 				partners.GET("/active/moods", controllers.GetPartnerMoods)
+				partners.GET("/active/periods", controllers.GetPartnerPeriods)
+				partners.GET("/active/periods/today", controllers.GetPartnerPeriodToday)
 				partners.PUT("/:id/accept", controllers.AcceptPartner)
 				partners.PUT("/:id/reject", controllers.RejectPartner)
 				partners.PUT("/:id/disable", controllers.DisablePartner)

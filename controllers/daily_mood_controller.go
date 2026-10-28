@@ -15,10 +15,12 @@ import (
 
 const moodDateLayout = "2006-01-02"
 
+const invalidMoodStatusMessage = "Mood status must be 'neutral', 'sad', 'angry', 'sick', 'happy', or 'glad'"
+
 type CreateDailyMoodInput struct {
-	Date       string `json:"date" binding:"required"`   // YYYY-MM-DD
-	Period     string `json:"period" binding:"required"` // morning | night
-	MoodStatus string `json:"mood_status" binding:"required"`
+	Date       string `json:"date" binding:"required"`        // YYYY-MM-DD
+	Period     string `json:"period" binding:"required"`      // morning | night
+	MoodStatus string `json:"mood_status" binding:"required"` // neutral | sad | angry | sick | happy | glad
 	Note       string `json:"note"`
 }
 
@@ -65,6 +67,12 @@ func CreateDailyMood(c *gin.Context) {
 		return
 	}
 
+	moodStatus, ok := models.NormalizeMoodStatus(input.MoodStatus)
+	if !ok {
+		helpers.Error(c, http.StatusBadRequest, invalidMoodStatusMessage)
+		return
+	}
+
 	db := config.DB.WithContext(c.Request.Context())
 
 	// Maksimal 1 mood per periode per hari
@@ -82,7 +90,7 @@ func CreateDailyMood(c *gin.Context) {
 		UserId:     userId,
 		Date:       input.Date,
 		Period:     input.Period,
-		MoodStatus: input.MoodStatus,
+		MoodStatus: moodStatus,
 		Note:       input.Note,
 	}
 
@@ -170,6 +178,12 @@ func UpdateDailyMood(c *gin.Context) {
 		return
 	}
 
+	moodStatus, ok := models.NormalizeMoodStatus(input.MoodStatus)
+	if !ok {
+		helpers.Error(c, http.StatusBadRequest, invalidMoodStatusMessage)
+		return
+	}
+
 	db := config.DB.WithContext(c.Request.Context())
 
 	mood, err := models.FindDailyMoodByID(db, uint(id), userId)
@@ -182,7 +196,7 @@ func UpdateDailyMood(c *gin.Context) {
 		return
 	}
 
-	mood.MoodStatus = input.MoodStatus
+	mood.MoodStatus = moodStatus
 	mood.Note = input.Note
 
 	if err := models.UpdateDailyMood(db, &mood); err != nil {

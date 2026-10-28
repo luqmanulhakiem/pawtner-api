@@ -1,12 +1,23 @@
 package models
 
 import (
+	"strings"
+
 	"gorm.io/gorm"
 )
 
 const (
 	MoodPeriodMorning = "morning" // bangun tidur
 	MoodPeriodNight   = "night"   // sebelum tidur
+)
+
+const (
+	MoodStatusNeutral = "neutral"
+	MoodStatusSad     = "sad"
+	MoodStatusAngry   = "angry"
+	MoodStatusSick    = "sick"
+	MoodStatusHappy   = "happy"
+	MoodStatusGlad    = "glad"
 )
 
 // DailyMood mencatat mood user. Setiap user maksimal punya 1 mood per
@@ -22,6 +33,17 @@ type DailyMood struct {
 
 func IsValidMoodPeriod(period string) bool {
 	return period == MoodPeriodMorning || period == MoodPeriodNight
+}
+
+// NormalizeMoodStatus merapikan input (huruf kecil, tanpa spasi tepi) dan
+// melaporkan apakah hasilnya termasuk status baku.
+func NormalizeMoodStatus(status string) (string, bool) {
+	status = strings.ToLower(strings.TrimSpace(status))
+	switch status {
+	case MoodStatusNeutral, MoodStatusSad, MoodStatusAngry, MoodStatusSick, MoodStatusHappy, MoodStatusGlad:
+		return status, true
+	}
+	return status, false
 }
 
 func CreateDailyMood(db *gorm.DB, mood *DailyMood) error {
