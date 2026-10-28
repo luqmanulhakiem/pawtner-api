@@ -19,8 +19,12 @@ func ConnectDatabase() {
 		log.Fatal("Gagal terhubung ke database:", err)
 	}
 
-	if err := database.AutoMigrate(&models.User{}, &models.DailyMood{}); err != nil {
+	if err := database.AutoMigrate(&models.User{}, &models.DailyMood{}, &models.Partner{}); err != nil {
 		log.Fatal("Gagal migrasi database:", err)
+	}
+
+	if err := models.BackfillUserUniqueCodes(database); err != nil {
+		log.Fatal("Gagal membuat unique code user:", err)
 	}
 
 	DB = database

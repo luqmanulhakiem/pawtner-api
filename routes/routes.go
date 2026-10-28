@@ -27,6 +27,18 @@ func SetupRouter() *gin.Engine {
 				moods.GET("/:id", controllers.GetDailyMood)
 				moods.PUT("/:id", controllers.UpdateDailyMood)
 			}
+
+			partners := api.Group("/partners")
+			{
+				partners.GET("/search", controllers.SearchPartner)
+				partners.POST("/invite", controllers.InvitePartner)
+				partners.GET("/requests", controllers.GetPartnerRequests)
+				partners.GET("/sent", controllers.GetSentPartnerRequests)
+				partners.GET("/active", controllers.GetActivePartner)
+				partners.PUT("/:id/accept", controllers.AcceptPartner)
+				partners.PUT("/:id/reject", controllers.RejectPartner)
+				partners.PUT("/:id/disable", controllers.DisablePartner)
+			}
 		}
 	}
 

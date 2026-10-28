@@ -5,6 +5,7 @@ import (
 	"pawtner-api/config"
 	"pawtner-api/helpers"
 	"pawtner-api/models"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -89,9 +90,10 @@ func Login(c *gin.Context) {
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
 		"user": gin.H{
-			"name":   user.FullName,
-			"email":  user.Email,
-			"gender": user.Gender,
+			"name":        user.FullName,
+			"email":       user.Email,
+			"gender":      user.Gender,
+			"unique_code": user.UniqueCode,
 		},
 	})
 }
@@ -102,6 +104,13 @@ func Register(c *gin.Context) {
 	// Validasi Input
 	if err := c.ShouldBindJSON(&input); err != nil {
 		helpers.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Gender dinormalisasi ke huruf kecil dan harus male/female
+	gender := strings.ToLower(strings.TrimSpace(input.Gender))
+	if gender != models.GenderMale && gender != models.GenderFemale {
+		helpers.Error(c, http.StatusBadRequest, "Gender must be 'male' or 'female'")
 		return
 	}
 
@@ -116,7 +125,7 @@ func Register(c *gin.Context) {
 		FullName:  input.FullName,
 		Email:     input.Email,
 		Password:  string(hashedPassword),
-		Gender:    input.Gender,
+		Gender:    gender,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -128,8 +137,9 @@ func Register(c *gin.Context) {
 	}
 
 	helpers.Success(c, http.StatusCreated, "Registration Successfully", gin.H{
-		"id":        user.ID,
-		"full_name": user.FullName,
-		"email":     user.Email,
+		"id":          user.ID,
+		"full_name":   user.FullName,
+		"email":       user.Email,
+		"unique_code": user.UniqueCode,
 	})
 }
