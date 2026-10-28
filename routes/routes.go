@@ -35,6 +35,7 @@ func SetupRouter() *gin.Engine {
 				partners.GET("/requests", controllers.GetPartnerRequests)
 				partners.GET("/sent", controllers.GetSentPartnerRequests)
 				partners.GET("/active", controllers.GetActivePartner)
+				partners.GET("/active/moods", controllers.GetPartnerMoods)
 				partners.PUT("/:id/accept", controllers.AcceptPartner)
 				partners.PUT("/:id/reject", controllers.RejectPartner)
 				partners.PUT("/:id/disable", controllers.DisablePartner)

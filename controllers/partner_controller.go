@@ -8,6 +8,7 @@ import (
 	"pawtner-api/models"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -162,6 +163,35 @@ func GetActivePartner(c *gin.Context) {
 	}
 
 	helpers.Success(c, http.StatusOK, "Active partner fetched successfully", partner)
+}
+
+// GetPartnerMoods menampilkan mood partner aktif. Opsional filter ?date=YYYY-MM-DD.
+func GetPartnerMoods(c *gin.Context) {
+	userId, ok := currentUserID(c)
+	if !ok {
+		helpers.Error(c, http.StatusUnauthorized, "Invalid user session")
+		return
+	}
+
+	date := c.Query("date")
+	if date != "" {
+		if _, err := time.Parse(moodDateLayout, date); err != nil {
+			helpers.Error(c, http.StatusBadRequest, "Invalid date format, use YYYY-MM-DD")
+			return
+		}
+	}
+
+	moods, err := models.GetActivePartnerMoods(config.DB.WithContext(c.Request.Context()), userId, date)
+	if err != nil {
+		if errors.Is(err, models.ErrPartnerNotActive) {
+			helpers.Error(c, http.StatusForbidden, "You don't have an active partner")
+			return
+		}
+		helpers.Error(c, http.StatusInternalServerError, "Failed to fetch partner moods")
+		return
+	}
+
+	helpers.Success(c, http.StatusOK, "Partner moods fetched successfully", moods)
 }
 
 func AcceptPartner(c *gin.Context) {

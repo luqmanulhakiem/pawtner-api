@@ -256,6 +256,19 @@ func FindActivePartner(db *gorm.DB, userId uint) (PartnerView, error) {
 	return view, nil
 }
 
+// GetActivePartnerMoods mengambil mood milik partner aktif userId. Jika tidak ada
+// relasi aktif, mengembalikan ErrPartnerNotActive sehingga mood tidak pernah terbuka.
+func GetActivePartnerMoods(db *gorm.DB, userId uint, date string) ([]DailyMood, error) {
+	partner, err := FindActivePartner(db, userId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrPartnerNotActive
+		}
+		return nil, err
+	}
+	return GetDailyMoods(db, partner.PartnerUserID, date)
+}
+
 // GetIncomingPartnerRequests mengambil undangan pending yang ditujukan kepada user.
 func GetIncomingPartnerRequests(db *gorm.DB, userId uint) ([]PartnerView, error) {
 	views := []PartnerView{}
