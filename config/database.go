@@ -19,7 +19,9 @@ func ConnectDatabase() {
 		log.Fatal("Gagal terhubung ke database:", err)
 	}
 
-	database.AutoMigrate(&models.User{})
+	if err := database.AutoMigrate(&models.User{}, &models.DailyMood{}); err != nil {
+		log.Fatal("Gagal migrasi database:", err)
+	}
 
 	DB = database
 	fmt.Println("Berhasil terhubung ke database MySQL!")

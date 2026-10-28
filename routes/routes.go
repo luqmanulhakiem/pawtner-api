@@ -1,9 +1,7 @@
 package routes
 
 import (
-	"net/http"
 	"pawtner-api/controllers"
-	"pawtner-api/helpers"
 	"pawtner-api/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -22,17 +20,13 @@ func SetupRouter() *gin.Engine {
 
 		api.Use(middleware.AuthMiddleware())
 		{
-			// Contoh endpoint yang butuh token
-			api.GET("/profile", func(c *gin.Context) {
-				// Mengambil data user ID yang disimpan dari middleware sebelumnya
-				userID, _ := c.Get("currentUserId")
-				email, _ := c.Get("currentUserEmail")
-
-				helpers.Success(c, http.StatusOK, "Access granted to protected route", gin.H{
-					"user_id": userID,
-					"email":   email,
-				})
-			})
+			moods := api.Group("/daily-moods")
+			{
+				moods.POST("", controllers.CreateDailyMood)
+				moods.GET("", controllers.GetDailyMoods)
+				moods.GET("/:id", controllers.GetDailyMood)
+				moods.PUT("/:id", controllers.UpdateDailyMood)
+			}
 		}
 	}
 
