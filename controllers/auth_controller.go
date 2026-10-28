@@ -3,10 +3,12 @@ package controllers
 import (
 	"net/http"
 	"pawtner-api/config"
+	"pawtner-api/helpers"
 	"pawtner-api/models"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -22,29 +24,71 @@ type LoginInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// GenerateAccessToken membuat access token berumur pendek
+func GenerateAccessToken(user models.User) (string, error) {
+	accessClaims := jwt.MapClaims{
+		"id":    user.ID,
+		"email": user.Email,
+		"exp":   time.Now().Add(time.Minute * 15).Unix(), // 15 Menit
+	}
+	tokenObj := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
+	return tokenObj.SignedString(config.GetJWTSecretKey())
+}
+
+// GenerateRefreshToken membuat refresh token berumur panjang
+func GenerateRefreshToken(user models.User) (string, error) {
+	refreshClaims := jwt.MapClaims{
+		"id":  user.ID,
+		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 Hari
+	}
+	tokenObj := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
+	return tokenObj.SignedString(config.GetJWTSecretKey())
+}
+
 func Login(c *gin.Context) {
 	var input LoginInput
 	var user models.User
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		helpers.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if err := config.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Wrong Email or Password"})
+	if err := config.DB.WithContext(c.Request.Context()).Where("email = ?", input.Email).First(&user).Error; err != nil {
+		helpers.Error(c, http.StatusUnauthorized, "Wrong Email or Password")
 		return
 	}
 
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Wrong Email or Password"})
+		helpers.Error(c, http.StatusUnauthorized, "Wrong Email or Password")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login Succesfully",
-		"data": gin.H{
+	accessToken, err := GenerateAccessToken(user)
+	if err != nil {
+		helpers.Error(c, http.StatusInternalServerError, "Could not generate access token")
+		return
+	}
+
+	// Panggil fungsi terpisah untuk membuat Refresh Token
+	refreshToken, err := GenerateRefreshToken(user)
+	if err != nil {
+		helpers.Error(c, http.StatusInternalServerError, "Could not generate refresh token")
+		return
+	}
+
+	// Simpan Refresh Token ke Database
+	user.RefreshToken = &refreshToken
+	if err := config.DB.WithContext(c.Request.Context()).Save(&user).Error; err != nil {
+		helpers.Error(c, http.StatusInternalServerError, "Could not save refresh token")
+		return
+	}
+
+	helpers.Success(c, http.StatusOK, "Login Successfully", gin.H{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
+		"user": gin.H{
 			"name":   user.FullName,
 			"email":  user.Email,
 			"gender": user.Gender,
@@ -57,14 +101,14 @@ func Register(c *gin.Context) {
 
 	// Validasi Input
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		helpers.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Hash Password before Saved to database
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		helpers.Error(c, http.StatusInternalServerError, "Failed to hash password")
 		return
 	}
 
@@ -77,18 +121,15 @@ func Register(c *gin.Context) {
 		UpdatedAt: time.Now(),
 	}
 
-	result := config.DB.Create(&user)
+	result := config.DB.WithContext(c.Request.Context()).Create(&user)
 	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Email already registered or something wrong"})
+		helpers.Error(c, http.StatusBadRequest, "Email already registered or something wrong")
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Registration Successfully",
-		"data": gin.H{
-			"id":        user.ID,
-			"full_name": user.FullName,
-			"email":     user.Email,
-		},
+	helpers.Success(c, http.StatusCreated, "Registration Successfully", gin.H{
+		"id":        user.ID,
+		"full_name": user.FullName,
+		"email":     user.Email,
 	})
 }
