@@ -57,6 +57,15 @@ func SetupRouter() *gin.Engine {
 				rules.DELETE("/:id", controllers.DeletePartnerRule)
 			}
 
+			memories := api.Group("/memories")
+			{
+				memories.POST("", controllers.CreateMemory)
+				memories.GET("", controllers.GetMemories)
+				memories.GET("/:id", controllers.GetMemory)
+				memories.PUT("/:id", controllers.UpdateMemory)
+				memories.DELETE("/:id", controllers.DeleteMemory)
+			}
+
 			partners := api.Group("/partners")
 			{
 				partners.GET("/search", controllers.SearchPartner)
